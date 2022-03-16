@@ -4,10 +4,10 @@
  const HtmlWebpackPlugin = require('html-webpack-plugin');
 
  const dist = path.resolve(__dirname, 'dist');
- const src = path.resolve(__dirname, 'src');
+//  const src = path.resolve(__dirname, 'src');
 
  module.exports = {
-   entry: path.resolve(src, 'index.js'),
+   entry: 'index.js', // path.resolve(src, 'index.js'),
    output: {
      filename: '[name].[hash].js',
      path: dist
@@ -54,7 +54,7 @@
     },
    plugins: [
      new HtmlWebpackPlugin({
-       template: path.resolve(src, 'index.html')
+       template: 'index.html', //path.resolve(src, 'index.html')
      }),
      new webpack.HotModuleReplacementPlugin(),
    ]
