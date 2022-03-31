@@ -107,36 +107,7 @@ scene.receiveShadow = true;
 scene.castShadow = true;
 
 
-//-------
-document.addEventListener('mousedown', onDocumentMouseDown, false);
-document.addEventListener('mousemove', onDocumentMouseMove, false); 
 
-var raycaster = new Raycaster(); // create once
-var mouse = new Vector2(); // create once
-function onDocumentMouseDown(event) {
-
-  event.preventDefault();
-
-  mouseYOnMouseDown = event.clientY - windowHalfY;
-  mouseXOnMouseDown = event.clientX - windowHalfX;
-
-  var vector = new Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
-  vector = vector.unproject(camera);
-  
-  raycaster.setFromCamera( mouse, camera );
-  
-  var intersects = raycaster.intersectObjects(circleObj, true); // Circle element which you want to identify
-
-  if (intersects.length > 0) {
-      alert("Mouse on Circle");
-  }
-
-}
-
-
-mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
-mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
-//-----------
 
   
  // Start the engine's main render loop.
