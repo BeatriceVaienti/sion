@@ -37,8 +37,8 @@ const amblight = new AmbientLight(0xffffff, 1);
 scene.add(amblight);
 
 //Create a DirectionalLight and turn on shadows for the light
-const light = new DirectionalLight( 0xffffff, 0.7, 100 );
-light.position.set( 2000, 900, -2000 ); //default; light shining from top
+const light = new DirectionalLight( 0xffffff, 2, 100 );
+light.position.set( 2000, 3000, -2000 ); //default; light shining from top
 
 light.castShadow = true; // default false
 scene.add( light );
@@ -49,7 +49,7 @@ light.shadow.mapSize.height = 2048;
 light.shadow.camera.near = 0.5; 
 light.shadow.camera.far = 4000; 
 
-let d = 4000; 
+const d = 8000; 
 light.shadow.camera.left = - d; 
 light.shadow.camera.right = d; 
 light.shadow.camera.top = d; 
@@ -58,20 +58,6 @@ light.shadow.camera.bottom = - d;
 let helper = new CameraHelper ( light.shadow.camera );
 scene.add( helper );
 
- 
-// Instruct the engine to resize when the window does.
-window.addEventListener('resize', () => {
-  camera.aspect = canvas.clientWidth / canvas.clientHeight;
-  camera.updateProjectionMatrix();
- 
-  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  });
- // const composer = new EffectComposer( renderer );
-
-window.addEventListener( 'pointermove', onPointerMove );
-window.requestAnimationFrame(render);
- 
 
 var pmremGenerator = new PMREMGenerator( renderer );
 pmremGenerator.compileEquirectangularShader();
@@ -80,31 +66,50 @@ var rgbeLoader = new RGBELoader()
         .setPath( 'hdr/' );
 var texture = new RGBELoader('hdr/venice_sunset_1k.hdr');
 var envMap = pmremGenerator.fromEquirectangular
-
+const wall = ()=>new MeshStandardMaterial({color: 0x808080, metalness: 0, roughness:1});
+const roof = ()=>new MeshStandardMaterial({color: 0x212121, metalness: 0, roughness: 1});
+const ground = ()=>new MeshStandardMaterial({color: 0x776e69, metalness: 0, roughness: 1});
 scene.environment = envMap;
 
 
  // Load the glTF model and add it to the scene.
  const loader = new GLTFLoader();
- loader.load(gltfUrl, (gltf) => {
-   
+ loader.load(gltfUrl, (gltf) => {   
    scene.add(...gltf.scene.children);
+   scene.traverse( function(node){
+     if (node.isMesh){
+      console.log(node)
+      if (node.material.name === "WallSurface"){
+        node.material = wall();        
+      }
 
+      if (node.material.name == "RoofSurface"){
+        node.material= roof();
+      }
+
+      if (node.material.name === "GroundSurface"){
+        node.material = ground();
+
+      }
+
+
+      node.castShadow = true;
+      node.receiveShadow = true;
+     }
+    
+  });
  });
 
- scene.traverse( function( child ) { 
 
-  if (child.isMesh) {
-    child.castShadow = true;
-    child.receiveShadow = true;
-    child.material = MeshStandardMaterial;
-    
-  
-    }
-  }
+// Instruct the engine to resize when the window does.
+window.addEventListener('resize', onWindowResize, false);
 
- );
-  
+function onWindowResize(){
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+}
+
 
 
 function onPointerMove( event ) {
@@ -112,36 +117,52 @@ function onPointerMove( event ) {
   // calculate pointer position in normalized device coordinates
   // (-1 to +1) for both components
 
-  pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-  pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
+  const elem = renderer.domElement
+  const boundingRect = elem.getBoundingClientRect()
+  pointer.x = (event.clientX - boundingRect.left)  / boundingRect.width * 2 - 1
+  pointer.y = - (event.clientY - boundingRect.top)  / boundingRect.height * 2 + 1
 }
 
+var oldintersects = []
 function render() {
-
   // update the picking ray with the camera and pointer position
   raycaster.setFromCamera( pointer, camera );
 
   // calculate objects intersecting the picking ray
   const intersects = raycaster.intersectObjects( scene.children );
+  
+  //console.log("intersects:", intersects)
 
-  for ( let i = 0; i < intersects.length; i ++ ) {
-
-    intersects[ i ].object.material.color.set( 0xff0000 );
-
-  }
-
-  renderer.render( scene, camera );
-
+  //for ( let i = 0; i < intersects.length; i ++ ) {
+  //  intersects[ i ].object.material.color.set( "red" );
+  //}
+  intersects.forEach((isect,i) => {
+    if(i==0 && isect.object.name != "0_LoD1_tin"){
+      isect.object.parent.children.forEach(c=>c.material.emissive.set( "red" ))
+      console.log(isect.object.parent.parent.userData)
+    }
+  })
+  const intersectsIds = intersects.map(isect=> isect.object.id)
+  oldintersects.forEach(isect => {
+    //if(!intersectsIds.includes(isect.object.id)){
+    if(intersects.length==0 || isect.object.id!=intersects[0].object.id){
+      //isect.object.material.emissive.set( "black" )
+      isect.object.parent.children.forEach(c=>c.material.emissive.set( "black" ))
+    }
+  })
+  oldintersects=intersects
+  //console.log(intersects)
 }
-
-
+window.addEventListener( 'pointermove', onPointerMove );
 
 // Start the engine's main render loop.
 const animate = () => {
   renderer.render(scene, camera);
+  render()
   requestAnimationFrame(animate);
 }
 
 
+
 animate();
+
