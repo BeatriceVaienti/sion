@@ -7,14 +7,15 @@ import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 // Import our glTF model.
-import gltfUrl from "../scene/sion_app.gltf";
+import gltfUrl from "../scene/sion_deployment.gltf";
 
 // Create the renderer and scene
 const scene = new Scene();
-
 const canvas = document.getElementById("canvas");
-
 const renderer = new WebGLRenderer({ canvas, antialias:true});
+const raycaster = new Raycaster();
+const pointer = new Vector2();
+
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = PCFSoftShadowMap; // default THREE.PCFShadowMap
 renderer.setSize(canvas.clientWidth, canvas.clientHeight );
@@ -32,7 +33,7 @@ controls.target.set(1000,20, -1000);
 controls.zoomSpeed = 0.4
 controls.update();
 
-const amblight = new AmbientLight(0xffffff, 0.5);
+const amblight = new AmbientLight(0xffffff, 1);
 scene.add(amblight);
 
 //Create a DirectionalLight and turn on shadows for the light
@@ -43,17 +44,16 @@ light.castShadow = true; // default false
 scene.add( light );
 
 //Set up shadow properties for the light
-light.shadow.mapSize.width = 2048; // default
-light.shadow.mapSize.height = 2048; // default
-light.shadow.camera.near = 0.5; // default
-light.shadow.camera.far = 4000; // default
+light.shadow.mapSize.width = 2048; 
+light.shadow.mapSize.height = 2048; 
+light.shadow.camera.near = 0.5; 
+light.shadow.camera.far = 4000; 
 
 let d = 4000; 
 light.shadow.camera.left = - d; 
 light.shadow.camera.right = d; 
 light.shadow.camera.top = d; 
 light.shadow.camera.bottom = - d; 
-light.shadowCameraVisible = true;
 
 let helper = new CameraHelper ( light.shadow.camera );
 scene.add( helper );
@@ -68,6 +68,9 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(window.devicePixelRatio);
   });
  // const composer = new EffectComposer( renderer );
+
+window.addEventListener( 'pointermove', onPointerMove );
+window.requestAnimationFrame(render);
  
 
 var pmremGenerator = new PMREMGenerator( renderer );
@@ -77,7 +80,7 @@ var rgbeLoader = new RGBELoader()
         .setPath( 'hdr/' );
 var texture = new RGBELoader('hdr/venice_sunset_1k.hdr');
 var envMap = pmremGenerator.fromEquirectangular
-//scene.background = envMap;
+
 scene.environment = envMap;
 
 
@@ -94,26 +97,51 @@ scene.environment = envMap;
   if (child.isMesh) {
     child.castShadow = true;
     child.receiveShadow = true;
-    child.material = MeshStandardMaterial
+    child.material = MeshStandardMaterial;
     
   
-  }
-
-
+    }
   }
 
  );
-scene.receiveShadow = true;
-scene.castShadow = true;
-
-
-
-
   
- // Start the engine's main render loop.
- const animate = () => {
-   renderer.render(scene, camera);
-   requestAnimationFrame(animate);
- }
 
- animate();
+
+function onPointerMove( event ) {
+
+  // calculate pointer position in normalized device coordinates
+  // (-1 to +1) for both components
+
+  pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+}
+
+function render() {
+
+  // update the picking ray with the camera and pointer position
+  raycaster.setFromCamera( pointer, camera );
+
+  // calculate objects intersecting the picking ray
+  const intersects = raycaster.intersectObjects( scene.children );
+
+  for ( let i = 0; i < intersects.length; i ++ ) {
+
+    intersects[ i ].object.material.color.set( 0xff0000 );
+
+  }
+
+  renderer.render( scene, camera );
+
+}
+
+
+
+// Start the engine's main render loop.
+const animate = () => {
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+
+
+animate();
