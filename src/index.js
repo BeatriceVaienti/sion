@@ -110,7 +110,31 @@ function onWindowResize(){
   camera.updateProjectionMatrix();
 }
 
+function from_userData_to_owner_info_list(userData){
+  /*attributes.height: "13.693991310120335"
+  attributes.owners.0.end_year: 1627
+  attributes.owners.0.name: "Waldin"
+  attributes.owners.0.start_year: 16103*/
+  const owners = []
+  for(var i=0; i<20;i++){
+    const start_year = userData["attributes.owners."+i+".start_year"]
+    const end_year = userData["attributes.owners."+i+".end_year"]
+    const name = userData["attributes.owners."+i+".name"]
+    if(name === undefined){
+      break
+    } else{
+      owners.push({start_year, end_year, name})
+    }
+  }
+  return owners
+}
 
+function fill_selected_object_owner_info(userData){
+  const owners= from_userData_to_owner_info_list(userData)
+  console.log("owners", owners)
+  //<tr> <td>1648 - 1656</td><td>prob. Carloz, Carlo (y c. G 51)</td></tr>
+  document.getElementById("owner-table").innerHTML=  owners.map(o=> "<tr> <td>"+o.start_year+" - "+o.end_year+"</td><td>"+o.name+"</td></tr>").join("\n")
+}
 
 function onPointerMove( event ) {
 
@@ -140,6 +164,7 @@ function render() {
     if(i==0 && isect.object.name != "0_LoD1_tin"){
       isect.object.parent.children.forEach(c=>c.material.emissive.set( "red" ))
       console.log(isect.object.parent.parent.userData)
+      fill_selected_object_owner_info(isect.object.parent.parent.userData)
     }
   })
   const intersectsIds = intersects.map(isect=> isect.object.id)
