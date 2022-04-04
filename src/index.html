@@ -17,7 +17,7 @@
     body {
       display: flex;
       flex-direction: column;
-      font-family: 'Roboto', Helvetica, sans-serif;
+      font-family: 'Roboto mono', Helvetica, sans-serif;
     }
 
     #container {
@@ -48,6 +48,17 @@
     #title {
       font-size: x-large;
     }
+
+
+    table tr:nth-child(odd) {
+      background: rgb(200, 200, 200);
+    }
+
+    table tr:nth-child(even) {
+      background: rgb(246, 246, 246);
+    }
+
+
   </style>
 </head>
 
@@ -55,9 +66,7 @@
   <div id='container'>
     <canvas id='canvas'></canvas>
   </div>
-  <div id='controls'>
-    <div id='title'>Sion 1840</div>
-  </div>
+
   <div id='owner-info'>
     <table class="table table-striped">
       <thead>
@@ -67,9 +76,16 @@
         </tr>
       </thead>
       <tbody id="owner-table">
-        <tr> <td>1648 - 1656</td><td>prob. Carloz, Carlo (y c. G 51)</td></tr>
+        
     </table>
   </div>
+
+  <div id='controls'>
+    <div id='title'>Sion 1840</div>
+  </div>
+
+
+
 </body>
 
 </html>
