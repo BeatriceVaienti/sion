@@ -1,4 +1,4 @@
-import { Scene, ShaderLib, RGBAFormat, NoBlending, PointLightHelper, NearestFilter, WebGLRenderTarget,  CameraHelper, ShaderMaterial, Raycaster, UniformsUtils, DirectionalLightHelper, Vector2, Object3D, WebGLRenderer, UnsignedByteType, PMREMGenerator,SphereGeometry, Mesh, MeshStandardMaterial, MeshPhysicalMaterial, DirectionalLight, PCFSoftShadowMap, AmbientLight, PerspectiveCamera, Fog, Vector3, Box3, PointLight} from "three";
+import { Scene, ShaderLib, EdgesGeometry, LineSegments, LineBasicMaterial, RGBAFormat, Color, NoBlending, PointLightHelper, NearestFilter, WebGLRenderTarget,  CameraHelper, ShaderMaterial, Raycaster, UniformsUtils, DirectionalLightHelper, Vector2, Object3D, WebGLRenderer, UnsignedByteType, PMREMGenerator,SphereGeometry, Mesh, MeshStandardMaterial, MeshPhysicalMaterial, DirectionalLight, PCFSoftShadowMap, AmbientLight, PerspectiveCamera, Fog, Vector3, Box3, PointLight} from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -10,8 +10,11 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { SSAOShader } from 'three/examples/jsm/shaders/SSAOShader.js';
 import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader';
 import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js';
+import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass.js';
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
+
 // Import our glTF model.
-import gltfUrl from "../scene/sion_deployment.gltf";
+import gltfUrl from "../scene/sion_deployment_2.gltf";
 
 
 
@@ -40,14 +43,14 @@ controls.target.set(1000,0, -1200);
 controls.zoomSpeed = 1
 controls.update();
 
-const amblight = new AmbientLight(0x404040, 0.2);
+const amblight = new AmbientLight(0xffffff, 0.4);
 scene.add(amblight);
 
-scene.fog = new Fog('black', 0, 1500);
-
+scene.fog = new Fog(0xffffff, 0, 1500);
+scene.background = 0xffffff
 //Create a DirectionalLight and turn on shadows for the light
-const light = new DirectionalLight( 0xffffff,  0.8);
-light.position.set( 1000, 2000, 500); //default; light shining from top
+const light = new DirectionalLight( 0xffffff,  0.4);
+light.position.set( 1000, 2300, 500); //default; light shining from top
 light.castShadow = true; // default false
 scene.add( light );
 //Set up shadow properties for the light
@@ -64,18 +67,18 @@ light.shadow.camera.bottom = - d;
 
 
 
-const light2 = new PointLight( 0xfff8dc,0.2);
-light2.position.set(800, 300,-1300); //default; light shining from top
-light2.castShadow = false; // default false
-scene.add( light2 );
+// const light2 = new PointLight( 0xffffff,0.2);
+// light2.position.set(800, 300,-1300); //default; light shining from top
+// light2.castShadow = false; // default false
+// scene.add( light2 );
+// light2.decay=3;
 
 
-const light3 = new PointLight(0xb0e0e6	,0.2);
-light3.position.set(900, 150,-1150); //default; light shining from top
-scene.add(light3);
-light3.castShadow = false;
-
-light3.decay = 3;
+// const light3 = new PointLight(0xffffff	,0.2);
+// light3.position.set(900, 150,-1150); //default; light shining from top
+// scene.add(light3);
+// light3.castShadow = false;
+// light3.decay = 3;
 
 
 //console.log("light3 target", light3)
@@ -84,11 +87,10 @@ light3.decay = 3;
 // scene.add(helper3);
 
 
-const wall = ()=>new MeshStandardMaterial({color: 0xdcdcdc, metalness: 0, roughness:1});
-const roof = ()=>new MeshStandardMaterial({color: 0x808080, metalness: 0.5, roughness: 1});
+const wall = ()=>new MeshStandardMaterial({color: 0xdcdcdc, metalness: 0, roughness:0.8});
+const roof = ()=>new MeshStandardMaterial({color: 0x808080, metalness: 0.5, roughness: 0.9});
 const ground = ()=>new MeshStandardMaterial({color: 0x776e69, metalness: 0, roughness: 1});
-wall.envMapIntensity = 0.1 ;
-roof.envMapIntensity = 0.1
+
 console.log(wall)
  // Load the glTF model and add it to the scene.
  const loader = new GLTFLoader();
@@ -99,7 +101,8 @@ console.log(wall)
    gltf.scene.position.multiplyScalar(-1);
    scene.traverse( function(node){
      if (node.isMesh){
-      //console.log(node)
+      
+
       if (node.material.name === "WallSurface"){
         node.material = wall();        
       }
@@ -116,10 +119,9 @@ console.log(wall)
       node.castShadow = true;
       node.receiveShadow = true;
      }
-    
+  
   });
  });
-
 
 
 // Load envMap
@@ -135,51 +137,51 @@ rgbeLoader.load('https://threejs.org/examples/textures/equirectangular/venice_su
   //scene.background = envMap;
   scene.environment = envMap;
 
-
   texture.dispose();
   pmremGenerator.dispose();
 
   });
 
 
+const composer = new EffectComposer(renderer)
+composer.setSize(window.innerWidth, window.innerHeight)
+const renderPass = new RenderPass(scene, camera)
+renderPass.clearColor =  new Color( 0, 0, 0 );
+renderPass.clearAlpha = 0;
 
-const composer = new EffectComposer(renderer);
-let renderPass = new RenderPass(scene, camera);
-composer.addPass( renderPass );
-const saoPass = new SAOPass( scene, camera, false, true);
-saoPass.setSize(window.innerWidth, window.innerHeight)
+const fxaaPass = new ShaderPass(FXAAShader);
+var pixelRatio = renderer.getPixelRatio();
+fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
+fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
 
+fxaaPass.renderToScreen = false;
+composer.addPass(renderPass);
+composer.addPass( fxaaPass );  
+
+// const outlinePass = new OutlinePass( new Vector2( window.innerWidth, window.innerHeight ), scene, camera );
+// outlinePass.edgeStrength = 8;
+// composer.addPass( outlinePass );
+
+
+// const ssaaRenderPass = new SSAARenderPass(scene, camera, 0xAAAAAA, 0)
+// ssaaRenderPass.sampleLevel = 0;
+// composer.addPass(ssaaRenderPass)
+
+const SAO = new SAOPass(scene, camera, true, true)
+SAO.resolution.set(8192, 8192)
+composer.addPass(SAO)
+
+SAO.params.saoBias = .5
+SAO.params.saoIntensity = .005
+SAO.params.saoBlurRadius = 5
+SAO.params.saoBlurStdDev =3
+SAO.params.saoScale = 50
+SAO.params.saoKernelRadius = 30
+SAO.params.saoMinResolution = 0
+SAO.params.output = 0
+SAO.prevNumSamples = 1
+SAO.camera.far =4000
 console.log(composer)
-// composer.addPass(renderPass);
-// const outlinePass = new OutlinePass( new Vector2(window.innerWidth, window.innerHeight), scene, camera);
-// outlinePass.edgeStrength = Number( 1 );
-// outlinePass.edgeGlow = Number( 1);
-// outlinePass.edgeThickness = Number( 10 );
-// // outlinePass.pulsePeriod = Number( 0 );
-// outlinePass.visibleEdgeColor.set( "#ffffff" );
-// outlinePass.hiddenEdgeColor.set( "#000000" ); 
-// com
-
-// // depth
-// var depthShader = ShaderLib[ "distanceRGBA" ]; // Depth encoding into RGBA texture
-// var depthUniforms = UniformsUtils.clone( depthShader.uniforms );
-// const depthMaterial = new ShaderMaterial( { fragmentShader: depthShader.fragmentShader,
-// vertexShader: depthShader.vertexShader, uniforms: depthUniforms } );
-// depthMaterial.blending = NoBlending;
-// const depthTarget = new WebGLRenderTarget( window.innerWidth, window.innerHeight,
-// { minFilter: NearestFilter, magFilter: NearestFilter, format: RGBAFormat } );
-
-// // postprocessing
-// //const composer = new EffectComposer( renderer );
-// composer.addPass( new RenderPass( scene, camera ) );
-// var effect = new ShaderPass( SSAOShader );
-// console.log(effect)
-// effect.uniforms[ 'tDepth' ].value = depthTarget;
-// effect.uniforms[ 'resolution' ].value.set( window.innerWidth, window.innerHeight );
-// effect.uniforms[ 'cameraNear' ].value = camera.near;
-// effect.uniforms[ 'cameraFar' ].value = camera.far;
-// effect.renderToScreen = true;
-// composer.addPass( effect );
 
 
 // Instruct the engine to resize when the window does.
@@ -188,6 +190,11 @@ window.addEventListener('resize', onWindowResize, false);
 function onWindowResize(){
   renderer.setSize( window.innerWidth, window.innerHeight );
   camera.aspect = window.innerWidth / window.innerHeight;
+  composer.setSize( window.innerWidth, window.innerHeight );
+  var pixelRatio = renderer.getPixelRatio();
+  fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
+  fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
+
   camera.updateProjectionMatrix();
 }
 
@@ -291,11 +298,12 @@ canvas.addEventListener( 'pointermove', onPointerMove );
 canvas.addEventListener( 'click', onClick );
 
 
-
 // Start the engine's main render loop.
 const animate = () => {
-  renderer.render(scene, camera);
-  render()
+  //renderer.render(scene, camera);
+  // Animate
+  composer.render();
+  render();
   requestAnimationFrame(animate);
 }
 animate();
