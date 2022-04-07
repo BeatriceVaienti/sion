@@ -14,7 +14,7 @@ import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 
 // Import our glTF model.
-import gltfUrl from "../scene/sion_deployment_2.gltf";
+import gltfUrl from "../scene/sion_for_deployment_owners_walls.gltf";
 
 
 
@@ -43,14 +43,14 @@ controls.target.set(1000,0, -1200);
 controls.zoomSpeed = 1
 controls.update();
 
-const amblight = new AmbientLight(0xffffff, 0.4);
+const amblight = new AmbientLight(0xffffff, 0.2);
 scene.add(amblight);
 
 scene.fog = new Fog(0xffffff, 0, 1500);
 scene.background = 0xffffff
 //Create a DirectionalLight and turn on shadows for the light
 const light = new DirectionalLight( 0xffffff,  0.4);
-light.position.set( 1000, 2300, 500); //default; light shining from top
+light.position.set( 1500, 1500, -1000); //default; light shining from top
 light.castShadow = true; // default false
 scene.add( light );
 //Set up shadow properties for the light
@@ -59,26 +59,27 @@ light.shadow.mapSize.height = 900000000;
 const shadow = new CameraHelper(light.shadow.camera)
 light.shadow.camera.near = 0.5; 
 light.shadow.camera.far = 10000; 
-const d =2000; 
+const d =1500; 
 light.shadow.camera.left = - d; 
 light.shadow.camera.right = d; 
 light.shadow.camera.top = d; 
 light.shadow.camera.bottom = - d; 
+light.target.position.set(1000,0,-1200);
+scene.add(light.target);
 
 
+const light2 = new PointLight( 0xffffff,0.2);
+light2.position.set(800, 300,-1300); //default; light shining from top
+light2.castShadow = false; // default false
+scene.add( light2 );
+light2.decay=3;
 
-// const light2 = new PointLight( 0xffffff,0.2);
-// light2.position.set(800, 300,-1300); //default; light shining from top
-// light2.castShadow = false; // default false
-// scene.add( light2 );
-// light2.decay=3;
 
-
-// const light3 = new PointLight(0xffffff	,0.2);
-// light3.position.set(900, 150,-1150); //default; light shining from top
-// scene.add(light3);
-// light3.castShadow = false;
-// light3.decay = 3;
+const light3 = new PointLight(0xffffff	,0.2);
+light3.position.set(900, 150,-1150); //default; light shining from top
+scene.add(light3);
+light3.castShadow = false;
+light3.decay = 3;
 
 
 //console.log("light3 target", light3)
@@ -87,9 +88,12 @@ light.shadow.camera.bottom = - d;
 // scene.add(helper3);
 
 
-const wall = ()=>new MeshStandardMaterial({color: 0xdcdcdc, metalness: 0, roughness:0.8});
-const roof = ()=>new MeshStandardMaterial({color: 0x808080, metalness: 0.5, roughness: 0.9});
-const ground = ()=>new MeshStandardMaterial({color: 0x776e69, metalness: 0, roughness: 1});
+var helper = new DirectionalLightHelper(light);
+scene.add(helper);
+
+const wall = ()=>new MeshPhysicalMaterial({color: 0xdcdcdc, metalness: 0.1, roughness:0.8});
+const roof = ()=>new MeshPhysicalMaterial({color: 0x808080, metalness: 0.5, roughness: 0.9});
+const ground = ()=>new MeshPhysicalMaterial({color: 0x776e69, metalness: 0.3, roughness: 1});
 
 console.log(wall)
  // Load the glTF model and add it to the scene.
@@ -143,53 +147,16 @@ rgbeLoader.load('https://threejs.org/examples/textures/equirectangular/venice_su
   });
 
 
-const composer = new EffectComposer(renderer)
-composer.setSize(window.innerWidth, window.innerHeight)
-const renderPass = new RenderPass(scene, camera)
-renderPass.clearColor =  "black";
-renderPass.clearAlpha = 0;
-
-const fxaaPass = new ShaderPass(FXAAShader);
-var pixelRatio = renderer.getPixelRatio();
-fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
-fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
-
-fxaaPass.renderToScreen = false;
-composer.addPass(renderPass);
-composer.addPass( fxaaPass );  
-
-// const outlinePass = new OutlinePass( new Vector2( window.innerWidth, window.innerHeight ), scene, camera );
-// outlinePass.edgeStrength = 8;
-// composer.addPass( outlinePass );
-
-
-const SAO = new SAOPass(scene, camera, true, true)
-SAO.resolution.set(8192, 8192)
-composer.addPass(SAO)
-
-SAO.params.saoBias = .5
-SAO.params.saoIntensity = .005
-SAO.params.saoBlurRadius = 5
-SAO.params.saoBlurStdDev =3
-SAO.params.saoScale = 50
-SAO.params.saoKernelRadius = 30
-SAO.params.saoMinResolution = 0
-SAO.params.output = 0
-SAO.prevNumSamples = 1
-SAO.camera.far =4000
-console.log(composer)
-
-
 // Instruct the engine to resize when the window does.
 window.addEventListener('resize', onWindowResize, false);
 
 function onWindowResize(){
   renderer.setSize( window.innerWidth, window.innerHeight );
   camera.aspect = window.innerWidth / window.innerHeight;
-  composer.setSize( window.innerWidth, window.innerHeight );
-  var pixelRatio = renderer.getPixelRatio();
-  fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
-  fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
+  // composer.setSize( window.innerWidth, window.innerHeight );
+  // var pixelRatio = renderer.getPixelRatio();
+  // fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
+  // fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
 
   camera.updateProjectionMatrix();
 }
@@ -296,9 +263,9 @@ canvas.addEventListener( 'click', onClick );
 
 // Start the engine's main render loop.
 const animate = () => {
-  //renderer.render(scene, camera);
+  renderer.render(scene, camera);
   // Animate
-  composer.render();
+  // composer.render();
   render();
   requestAnimationFrame(animate);
 }
