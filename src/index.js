@@ -146,7 +146,7 @@ rgbeLoader.load('https://threejs.org/examples/textures/equirectangular/venice_su
 const composer = new EffectComposer(renderer)
 composer.setSize(window.innerWidth, window.innerHeight)
 const renderPass = new RenderPass(scene, camera)
-renderPass.clearColor =  new Color( 0, 0, 0 );
+renderPass.clearColor =  "black";
 renderPass.clearAlpha = 0;
 
 const fxaaPass = new ShaderPass(FXAAShader);
@@ -162,10 +162,6 @@ composer.addPass( fxaaPass );
 // outlinePass.edgeStrength = 8;
 // composer.addPass( outlinePass );
 
-
-// const ssaaRenderPass = new SSAARenderPass(scene, camera, 0xAAAAAA, 0)
-// ssaaRenderPass.sampleLevel = 0;
-// composer.addPass(ssaaRenderPass)
 
 const SAO = new SAOPass(scene, camera, true, true)
 SAO.resolution.set(8192, 8192)
