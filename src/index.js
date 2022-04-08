@@ -14,7 +14,7 @@ import { SSAARenderPass } from 'three/examples/jsm/postprocessing/SSAARenderPass
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js';
 
 // Import our glTF model.
-import gltfUrl from "../scene/sion_for_deployment_owners_walls.gltf";
+import gltfUrl from "../scene/sion_owners_walls_hqTIN.gltf";
 
 
 
@@ -95,17 +95,30 @@ const wall = ()=>new MeshPhysicalMaterial({color: 0xdcdcdc, metalness: 0.1, roug
 const roof = ()=>new MeshPhysicalMaterial({color: 0x808080, metalness: 0.5, roughness: 0.9});
 const ground = ()=>new MeshPhysicalMaterial({color: 0x776e69, metalness: 0.3, roughness: 1});
 
+
+
+// const loader = new OBJLoader();
+// loader.load( "models/obj/ninja/ninjaHead_Low.obj", function ( group ) {
+//   const geometry = group.children[ 0 ].geometry;
+//   geometry.attributes.uv2 = geometry.attributes.uv;
+//   geometry.center();
+
+
 console.log(wall)
  // Load the glTF model and add it to the scene.
  const loader = new GLTFLoader();
  loader.load(gltfUrl, (gltf) => {   
+   
+
    scene.add(...gltf.scene.children);
    var box = new Box3().setFromObject(gltf.scene);
    box.getCenter(gltf.scene.position);
    gltf.scene.position.multiplyScalar(-1);
    scene.traverse( function(node){
+     
      if (node.isMesh){
-      
+      console.log(node.geometry);
+
 
       if (node.material.name === "WallSurface"){
         node.material = wall();        
@@ -122,7 +135,16 @@ console.log(wall)
 
       node.castShadow = true;
       node.receiveShadow = true;
+
+      if (node.geometry != undefined){
+        const geometry = node.geometry;
+        geometry.attributes.uv2 = geometry.attributes.uv;
+        geometry.attributes.uv2.name = "AO_mq.png"
+
+      }
+
      }
+     
   
   });
  });
